@@ -1,0 +1,107 @@
+import { Complaint } from '../types/complaint';
+
+let ws: WebSocket | null = null;
+let isConnecting = false;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const messageHandlers = new Map<string, (data: any) => void>();
+const messageQueue: any[] = [];
+
+const processQueue = () => {
+    while (messageQueue.length > 0 && ws?.readyState === WebSocket.OPEN) {
+        const message = messageQueue.shift();
+        if (message && ws) {
+            ws.send(JSON.stringify(message));
+        }
+    }
+};
+
+const sendMessage = (message: any) => {
+    if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+    } else {
+        messageQueue.push(message);
+        initializeSocket().catch(console.error);
+    }
+};
+
+export const initializeSocket = async (): Promise<WebSocket> => {
+    if (ws?.readyState === WebSocket.OPEN) return ws;
+    if (isConnecting) return new Promise((resolve) => {
+        const checkConnection = setInterval(() => {
+            if (ws?.readyState === WebSocket.OPEN && ws) {
+                clearInterval(checkConnection);
+                resolve(ws);
+            }
+        }, 100);
+    });
+
+    isConnecting = true;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api/socketio`;
+
+    try {
+        const newWs = new WebSocket(wsUrl);
+
+        return new Promise((resolve, reject) => {
+            if (!newWs) return reject(new Error('WebSocket initialization failed'));
+
+            newWs.onopen = () => {
+                ws = newWs;
+                isConnecting = false;
+                reconnectAttempts = 0;
+                processQueue();
+                resolve(newWs);
+            };
+
+            newWs.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'ticket-created') {
+                        const handler = messageHandlers.get('new-tickets');
+                        if (handler) handler(data.data);
+                    }
+                } catch (error) {
+                    console.error('Error parsing websocket message:', error);
+                }
+            };
+
+            newWs.onclose = () => {
+                ws = null;
+                if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                    reconnectAttempts++;
+                    setTimeout(() => initializeSocket(), 1000 * Math.pow(2, reconnectAttempts));
+                }
+            };
+
+            newWs.onerror = (error) => {
+                isConnecting = false;
+                reject(error);
+            };
+        });
+    } catch (error) {
+        isConnecting = false;
+        throw error;
+    }
+};
+
+export const sendTicketNotification = (ticket: Complaint) => {
+    sendMessage({
+        type: 'new-ticket',
+        ticket
+    });
+};
+
+export const subscribeToNewTickets = (callback: (ticket: Complaint) => void) => {
+    messageHandlers.set('new-tickets', callback);
+    return () => messageHandlers.delete('new-tickets');
+};
+
+export const disconnect = () => {
+    if (ws?.readyState === WebSocket.OPEN) {
+        ws.close();
+    }
+    ws = null;
+    messageHandlers.clear();
+    messageQueue.length = 0;
+};

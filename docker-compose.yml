@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  mongo_db:
+    container_name: integ_db
+    image: mongo
+    restart: always
+    volumes:
+      - mongo_db:/data/db
+
+  integ_api:
+    container_name: integ_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    environment:
+      PORT: 3000
+      MONGODB: mongodb://mongo_db:27017/integ
+    depends_on:
+      - mongo_db
+
+volumes:
+  mongo_db: {}
