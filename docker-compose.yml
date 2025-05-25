@@ -9,6 +9,9 @@ services:
       - mongo_db:/data/db
 
   integ_api:
+    dns: 
+      - 8.8.8.8
+      - 1.1.1.1
     container_name: integ_api
     build:
       context: .

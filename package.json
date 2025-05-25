@@ -1,5 +1,6 @@
 {
   "private": true,
+  "name": "ticksolve",
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
