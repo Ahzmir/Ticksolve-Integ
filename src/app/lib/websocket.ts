@@ -49,7 +49,6 @@ export const notifyTicketUpdated = (ticket: Ticket) => {
     socket?.emit("ticket:update", ticket);
 };
 
-// OPTIONAL: join a specific ticket room for comment/status updates
 export const joinTicketRoom = (ticketId: string) => {
     initializeSocket();
     socket?.emit("join-room", ticketId);

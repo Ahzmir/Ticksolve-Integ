@@ -7,12 +7,37 @@ import { socket } from "@/app/socket";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 
-export default function TicketAdminClientComponent({ id }) {
+// Types moved outside component
+type Comment = {
+  userId: string;
+  content: string;
+  isAdminComment: boolean;
+  createdAt: string;
+};
+
+type Ticket = {
+  id: string;
+  description: string;
+  status: string;
+  comments: Comment[];
+  [key: string]: any;
+};
+
+type User = {
+  id: string;
+  [key: string]: any;
+};
+
+export default function TicketAdminClientComponent({ id }: { id: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [ticket, setTicket] = useState({});
-  const [user, setUser] = useState(null);
-
+  const [ticket, setTicket] = useState<Ticket>({
+    id: "",
+    description: "",
+    status: "",
+    comments: [],
+  });
+  const [user, setUser] = useState<User | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [commentText, setCommentText] = useState("");
 
@@ -69,7 +94,7 @@ export default function TicketAdminClientComponent({ id }) {
         },
         body: JSON.stringify({
           comment: {
-            userId: userData.id, // Pass actual user ID
+            userId: userData.id,
             content: commentText,
             isAdminComment: true,
           },
@@ -84,9 +109,6 @@ export default function TicketAdminClientComponent({ id }) {
         comment: updatedComplaint.comments.at(-1),
       });
 
-      const temp: any[] = updatedComplaint.comments;
-      temp.push();
-
       setCommentText(""); // Clear input
     } catch (err) {
       console.error(err);
@@ -95,7 +117,7 @@ export default function TicketAdminClientComponent({ id }) {
     }
   };
 
-  const handleUpdateStatus = async (status: any) => {
+  const handleUpdateStatus = async (status: string) => {
     try {
       const res = await fetch(`/api/complaints/${id}`, {
         method: "POST",
@@ -138,16 +160,16 @@ export default function TicketAdminClientComponent({ id }) {
       console.log("JOINED (ADMIN):", id);
     }
 
-    const onNewComment = (newComment) => {
-      setTicket((prev) => ({
+    const onNewComment = (newComment: Comment) => {
+      setTicket((prev: Ticket) => ({
         ...prev,
-        comments: [...(prev.comments || []), newComment],
+        comments: [...prev.comments, newComment],
       }));
       console.log("Received comment via socket (USER):", newComment);
     };
 
-    const onNewStatus = (newStatus) => {
-      setTicket((prev) => ({
+    const onNewStatus = (newStatus: string) => {
+      setTicket((prev: Ticket) => ({
         ...prev,
         status: newStatus,
       }));
@@ -199,7 +221,7 @@ export default function TicketAdminClientComponent({ id }) {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col p-8 rounded-3xl max-h-[70vh] overflow-y-auto bg-gray-100 shadow border border-gray-200 w-full">
             {ticket?.comments?.map((comment, index) => {
-              const isSelf = comment.userId === user.id; // Adjust based on your auth logic
+              const isSelf = comment.userId === user?.id;
               return (
                 <div
                   key={index}

@@ -14,7 +14,12 @@ export default function HistoryPage() {
 
   useEffect(() => {
     const fetchComplaints = async () => {
-      const storedUser = await localStorage.getItem("user");
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) {
+        setError("User not found");
+        setLoading(false);
+        return;
+      }
       const userData = JSON.parse(storedUser);
 
       try {

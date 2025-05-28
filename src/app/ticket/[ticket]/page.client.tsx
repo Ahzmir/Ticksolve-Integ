@@ -6,11 +6,32 @@ import { useState, useEffect } from "react";
 import { socket } from "@/app/socket";
 import { Badge } from "@/app/components/ui/badge";
 
-export default function TicketClientComponent({ id }) {
+interface Ticket {
+  id: string;
+  status: string;
+  description: string;
+  comments: Array<{
+    userId: string;
+    content: string;
+    isAdminComment: boolean;
+    createdAt: string;
+  }>;
+}
+
+interface User {
+  id: string;
+  isAdmin: boolean;
+}
+
+interface TicketClientComponentProps {
+  id: string;
+}
+
+export default function TicketClientComponent({ id }: TicketClientComponentProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [ticket, setTicket] = useState({});
-  const [user, setUser] = useState(null);
+  const [ticket, setTicket] = useState<Ticket>({} as Ticket);
+  const [user, setUser] = useState<User | null>(null);
 
   const [isSending, setIsSending] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -110,14 +131,14 @@ export default function TicketClientComponent({ id }) {
       console.log("JOINED (USER):", id);
     }
 
-    const onNewComment = (newComment) => {
+    const onNewComment = (newComment: { userId: string; content: string; isAdminComment: boolean; createdAt: string }) => {
       setTicket((prev) => ({
         ...prev,
         comments: [...(prev.comments || []), newComment],
       }));
     };
 
-    const onNewStatus = (newStatus) => {
+    const onNewStatus = (newStatus: string) => {
       setTicket((prev) => ({
         ...prev,
         status: newStatus,
@@ -170,7 +191,7 @@ export default function TicketClientComponent({ id }) {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col p-8 rounded-3xl max-h-[70vh] overflow-y-auto bg-gray-100 shadow border border-gray-200 w-full">
             {ticket?.comments?.map((comment, index) => {
-              const isSelf = comment.userId === user.id; // Adjust based on your auth logic
+              const isSelf = comment.userId === user?.id; // Adjust based on your auth logic
               return (
                 <div
                   key={index}

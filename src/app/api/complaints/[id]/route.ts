@@ -95,11 +95,18 @@ export async function POST(
         // Update any provided fields dynamically
         Object.entries(body).forEach(([key, value]) => {
             // Handle comment addition separately if it's in the body
-            if (key === "comment" && value && typeof value === "object") {
+            if (
+                key === "comment" &&
+                value &&
+                typeof value === "object" &&
+                "userId" in value &&
+                "content" in value
+            ) {
+                const comment = value as { userId: string; content: string; isAdminComment?: boolean };
                 complaint.comments.push({
-                    userId: value.userId,
-                    content: value.content,
-                    isAdminComment: value.isAdminComment || false,
+                    userId: comment.userId,
+                    content: comment.content,
+                    isAdminComment: comment.isAdminComment || false,
                     createdAt: new Date(),
                 });
             } else {
