@@ -3,6 +3,7 @@ import dbConnect from '@/app/lib/mongodb';
 import mongoose from 'mongoose';
 import type { NextRequest } from 'next/server';
 
+
 // Import the User model
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
   firstName: String,

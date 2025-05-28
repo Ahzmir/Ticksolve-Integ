@@ -25,15 +25,15 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const userData = sessionStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      router.push("/");
-    }
-    setLoading(false);
-  }, [router]);
+useEffect(() => {
+  const userData = localStorage.getItem("user");
+  if (userData) {
+    setUser(JSON.parse(userData));
+  } else {
+    router.push("/");
+  }
+  setLoading(false);
+}, [router]);
 
   if (loading) {
     return <div>Loading...</div>;

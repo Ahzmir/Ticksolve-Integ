@@ -64,7 +64,7 @@ export default function DashboardPage() {
     setUser(JSON.parse(storedUser));
     fetchTickets();
 
-    const onUpdatedStatus = async (updatedTicket) => {
+    const onUpdatedStatus = async (updatedTicket: any) => {
       setTickets((prev) =>
         prev.map((t) =>
           t._id === updatedTicket._id ? transformTicket(updatedTicket) : t
